@@ -1,8 +1,10 @@
-﻿in vec3 vPos;
-out vec3 glPos;
+﻿#version 430
+
+in vec3 vPosition;
+out vec3 glPosition;
 
 void main(void)
 {
-	gl_pos = vec4(vPos, 1.0);
-	glPos = vPos;
+	gl_Position = vec4(vPosition, 1.0);
+	glPosition = vPosition;
 }

@@ -1,9 +1,9 @@
 ﻿#version 430
 
 out vec4 FragColor;
-in vec3 glPos;
+in vec3 glPosition;
 
-void main(void)
+void main( void )
 {
-	FlagColor = vec4 (abs(glPos.xy), 0, 1.0);
+	FragColor = vec4 ( abs(glPosition.xy), 0, 1.0);
 }

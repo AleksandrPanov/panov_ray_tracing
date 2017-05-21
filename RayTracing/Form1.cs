@@ -8,7 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using OpenTK;
-using OpenTK.Graphics;
+using OpenTK.Graphics.OpenGL;
 
 namespace RayTracing
 {
@@ -16,7 +16,7 @@ namespace RayTracing
     {
         View view;
         public Form1()
-        {
+        {           
             InitializeComponent();
             view = new View();
         }
@@ -25,10 +25,12 @@ namespace RayTracing
         {
             view.Update();
             glControl1.SwapBuffers();
+            GL.UseProgram(0);
         }
 
         private void glControl1_Load(object sender, EventArgs e)
         {
+            GL.Viewport(0, 0, glControl1.Width, glControl1.Height);
             view.Setup(glControl1.Width, glControl1.Height);
         }
     }

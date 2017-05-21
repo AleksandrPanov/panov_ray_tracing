@@ -17,13 +17,15 @@ namespace RayTracing
         Vector3 []vertdata;
         int vboPos;
 
-        int uniform_pos = 0;
+        int uniform_pos;
         Vector3 campos;
-        int uniform_aspect = 0;
+        int uniform_aspect;
         Vector3 aspect;
+        public int attribute_vpos;
 
         public void Setup(int w, int h)
         {
+            string str = GL.GetString(StringName.ShadingLanguageVersion);
             GL.ClearColor(Color.DarkGray);
             GL.ShadeModel(ShadingModel.Smooth);
 
@@ -39,14 +41,21 @@ namespace RayTracing
             GL.MatrixMode(MatrixMode.Modelview);
             GL.LoadMatrix(ref viewMat);
 
+
             InitSheders();
+            InitBuffer();
         }
         public void Update()
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
+            GL.Enable(EnableCap.DepthTest);
+            GL.EnableVertexAttribArray(attribute_vpos);
+            GL.DrawArrays(PrimitiveType.Quads, 0, 4);
+            GL.DisableVertexAttribArray(attribute_vpos);
+
         }
         public View()
-        {
+        {         
             vertdata = new Vector3[]{
                 new Vector3(-1f,-1f,0f),
                 new Vector3(1f,-1f,0f),
@@ -63,7 +72,7 @@ namespace RayTracing
             }
             GL.CompileShader(address);//compile
             GL.AttachShader(program, address);//link
-            Console.WriteLine(GL.GetShaderInfoLog(address));
+           // Console.WriteLine(GL.GetShaderInfoLog(address));
         }
         private void InitBuffer()
         {
@@ -71,10 +80,10 @@ namespace RayTracing
             GL.BindBuffer(BufferTarget.ArrayBuffer, vboPos);
             GL.BufferData<Vector3>(BufferTarget.ArrayBuffer, (IntPtr)(vertdata.Length *
                 Vector3.SizeInBytes), vertdata, BufferUsageHint.StaticDraw);
-            GL.VertexAttribPointer(0, 3, VertexAttribPointerType.Float, false, 0, 0);
+            GL.VertexAttribPointer(attribute_vpos, 3, VertexAttribPointerType.Float, false, 0, 0);
             GL.Uniform3(uniform_pos,campos);
             GL.Uniform3(uniform_aspect, aspect);
-
+            GL.UseProgram(BasicProgramID);
             GL.BindBuffer(BufferTarget.ArrayBuffer, 0);
         }
         private void InitSheders()
