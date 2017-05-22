@@ -116,21 +116,21 @@ void initializeDefaultScene()
 	triangles[6].v1 = vec3(-5.0,-5.0, 5.0); 
 	triangles[6].v2 = vec3(-5.0,-5.0,-5.0); 
 	triangles[6].v3 = vec3( 5.0,-5.0, 5.0); 
-	triangles[6].MaterialIdx = 0; 
+	triangles[6].MaterialIdx = 4; 
 	triangles[7].v1 = vec3(5.0, -5.0, -5.0); 
 	triangles[7].v2 = vec3(5.0,-5.0, 5.0); 
 	triangles[7].v3 = vec3(-5.0,-5.0,-5.0); 
-	triangles[7].MaterialIdx = 0; 
+	triangles[7].MaterialIdx = 4; 
 
 	/*up wall */ 
 	triangles[8].v1 = vec3(-5.0, 5.0,-5.0); 
 	triangles[8].v2 = vec3(-5.0, 5.0, 5.0); 
 	triangles[8].v3 = vec3( 5.0, 5.0, 5.0); 
-	triangles[8].MaterialIdx = 0; 
+	triangles[8].MaterialIdx = 5; 
 	triangles[9].v1 = vec3(-5.0, 5.0, -5.0); 
 	triangles[9].v2 = vec3( 5.0, 5.0, 5.0); 
 	triangles[9].v3 = vec3(5.0, 5.0, -5.0); 
-	triangles[9].MaterialIdx = 0; 
+	triangles[9].MaterialIdx = 5; 
 
 	/*front wall*/ 
 	triangles[10].v1 = vec3(-5.0,-5.0, -5.0); 
@@ -213,7 +213,7 @@ bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time )
 
 bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect ) /*ТУТ НАДО ДОДЕЛАТЬ МАТЕРИАЛЫ!*/
 {
-	int numTriangles = 2;
+	int numTriangles = 10;
 	bool result = false;
 	float test = start;
 	intersect.Time = final;
@@ -293,6 +293,18 @@ materials[3].LightCoeffs = vec4(lightCoefs);
 materials[3].ReflectionCoef = 0.5;
 materials[3].RefractionCoef = 1.0;
 materials[3].MaterialType = DIFFUSE_REFLECTION;
+
+materials[4].Color = vec3(0.5, 0.0, 0.5);
+materials[4].LightCoeffs = vec4(lightCoefs);
+materials[4].ReflectionCoef = 0.5;
+materials[4].RefractionCoef = 1.0;
+materials[4].MaterialType = DIFFUSE_REFLECTION;
+
+materials[5].Color = vec3(0.5, 0.5, 0.5);
+materials[5].LightCoeffs = vec4(lightCoefs);
+materials[5].ReflectionCoef = 0.5;
+materials[5].RefractionCoef = 1.0;
+materials[5].MaterialType = DIFFUSE_REFLECTION;
 }
 vec3 Phong ( SIntersection intersect, SLight currLight, float shadowing, SCamera uCamera)
 {
@@ -361,8 +373,7 @@ void main( void )
 	STracingRay trRay = STracingRay(ray, 1, 0);
 	push(trRay);
 	while(!isEmpty())
-	{
-			resultColor = vec3(0,0,0);
+	{			
 			STracingRay trRay = pop();
 			ray = trRay.ray;
 			SIntersection intersect;
@@ -398,6 +409,7 @@ void main( void )
 				} 
 			} 
 		}
+		FragColor = vec4 (resultColor, 1.0);
 
 	/*float start = 0;
 	float final = 1000000.0;
