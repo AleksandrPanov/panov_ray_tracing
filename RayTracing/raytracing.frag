@@ -4,6 +4,8 @@
 const int DIFFUSE = 1;
 const int REFLECTION = 2;
 const int REFRACTION = 3;
+const int DIFFUSE_REFLECTION = 1;
+const int MIRROR_REFLECTION = 2;
 
 out vec4 FragColor;
 in vec3 glPosition;
@@ -56,10 +58,22 @@ float ReflectionCoef;
 float RefractionCoef;
 int MaterialType;
 };
+struct SLight
+{
+vec3 Position;
+};
+struct STracingRay
+{
+SRay ray;
+float contribution;
+int depth;
+};
 
+SLight light;
 STriangle triangles[10];
 SSphere spheres[2];
-SMaterial materials[10];
+SMaterial materials[6];
+float Unit = 1;
 
 SRay GenerateRay ( SCamera uCamera )
 {
@@ -159,7 +173,7 @@ bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time )
 	return true;
 }
 
-bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect )
+bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect ) /*ТУТ НАДО ДОДЕЛАТЬ МАТЕРИАЛЫ!*/
 {
 	int numTriangles = 2;
 	bool result = false;
@@ -170,6 +184,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		SSphere sphere = spheres[i];
 		if (IntersectSphere (sphere, ray, start, final, test ) && test < intersect.Time )
 		{
+			int numMat = spheres[i].MaterialIdx;
 			intersect.Time = test;
 			intersect.Point = ray.Origin + ray.Direction * test;
 			intersect.Normal = normalize ( intersect.Point - spheres[i].Center );
@@ -177,7 +192,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			intersect.LightCoeffs = vec4(0,0,0,0);
 			intersect.ReflectionCoef = 0;
 			intersect.RefractionCoef = 0;
-			intersect.MaterialType = 0;
+			intersect.MaterialType =  numMat;
 			result = true;
 		}
 
@@ -187,7 +202,7 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 		STriangle triangle = triangles[i];
 		if(IntersectTriangle(ray, triangle.v1, triangle.v2, triangle.v3, test) && test < intersect.Time)
 		{
-
+			int numMat = triangles[i].MaterialIdx;
 			intersect.Time = test;
 			intersect.Point = ray.Origin + ray.Direction * test;
 			intersect.Normal = normalize(cross(triangle.v1 - triangle.v2, triangle.v3 - triangle.v2));
@@ -195,13 +210,12 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			intersect.LightCoeffs = vec4(0,0,0,0);
 			intersect.ReflectionCoef = 0;
 			intersect.RefractionCoef = 0;
-			intersect.MaterialType = 0;
+			intersect.MaterialType = numMat;
 			result = true;
 		}
 	}
 	return result;
 }
-
 SCamera initializeDefaultCamera()
 
 {	 SCamera camera;
@@ -212,9 +226,55 @@ SCamera initializeDefaultCamera()
 	 camera.Scale = vec2(1.0);
 	 return camera;
 }
-
-
-
+void initializeDefaultLightMaterials(out SLight light)
+{
+//** LIGHT **//
+light.Position = vec3(0.0, 2.0, -4.0f);
+/** MATERIALS **/
+vec4 lightCoefs = vec4(0.4,0.9,0.0,512.0);
+materials[0].Color = vec3(0.0, 1.0, 0.0);
+materials[0].LightCoeffs = vec4(lightCoefs);
+materials[0].ReflectionCoef = 0.5;
+materials[0].RefractionCoef = 1.0;
+materials[0].MaterialType = DIFFUSE;
+materials[1].Color = vec3(0.0, 0.0, 1.0);
+materials[1].LightCoeffs = vec4(lightCoefs);
+materials[1].ReflectionCoef = 0.5;
+materials[1].RefractionCoef = 1.0;
+materials[1].MaterialType = DIFFUSE;
+}
+vec3 Phong ( SIntersection intersect, SLight currLight, float shadowing, SCamera uCamera)
+{
+	vec3 lightTmp = normalize ( currLight.Position - intersect.Point );
+	float diffuse = max(dot(lightTmp, intersect.Normal), 0.0);
+	vec3 view = normalize(uCamera.Position - intersect.Point);
+	vec3 reflected = reflect( -view, intersect.Normal );
+	float specular = pow(max(dot(reflected, lightTmp), 0.0), intersect.LightCoeffs.w);
+	return intersect.LightCoeffs.x * intersect.Color +
+ intersect.LightCoeffs.y * diffuse * intersect.Color * shadowing +
+ intersect.LightCoeffs.z * specular * Unit;
+}
+float Shadow(SLight currLight, SIntersection intersect)
+{
+	// Point is lighted
+	float shadowing = 1.0;
+	// Vector to the light source
+	vec3 direction = normalize(currLight.Position - intersect.Point);
+	// Distance to the light source
+	float distanceLight = distance(currLight.Position, intersect.Point);
+	// Generation shadow ray for this light source
+	SRay shadowRay = SRay(intersect.Point + direction * 0.001, direction);
+	// ...test intersection this ray with each scene object
+	SIntersection shadowIntersect;
+	shadowIntersect.Time = 1000000.0;
+	// trace ray from shadow ray begining to light source position
+	if(Raytrace(shadowRay, 0, distanceLight,shadowIntersect))
+	{
+		// this light source is invisible in the intercection point
+		shadowing = 0.0;
+	}
+	return shadowing;
+}
 void main( void )
 {
 	/*SCamera uCamera = initializeDefaultCamera();
@@ -230,9 +290,14 @@ void main( void )
 	intersect.Time = 1000000.0;
 	vec3 resultColor = vec3(0,0,0);
 	initializeDefaultScene();
+	initializeDefaultLightMaterials(light);
 	if (Raytrace(ray,  start, final, intersect))
 	{
-		resultColor = vec3(1,0,0);
+		float contribution = 1;
+		float shadowing = Shadow(light, intersect);		
+		//resultColor = vec3(1,0,0);
+	    resultColor = vec3(1,0,0);
+		resultColor += contribution * Phong (intersect, light, shadowing, uCamera );
 	}
 	FragColor = vec4 (resultColor, 1.0);
 }
