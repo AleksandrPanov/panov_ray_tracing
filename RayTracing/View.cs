@@ -9,6 +9,7 @@ using OpenTK.Graphics.OpenGL;
 using System.IO;
 namespace RayTracing
 {
+
     class View
     {
         int BasicProgramID;

@@ -1,4 +1,4 @@
-﻿#version 430
+﻿#version 400
 
 in vec3 vPosition;
 out vec3 glPosition;
