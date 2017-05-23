@@ -28,16 +28,16 @@ struct SCamera
 {
  vec3 Position;//точка расположения камеры
  vec3 View;//вектор "взгляда" или координаты точки, распологающейся в центре экрана
- vec3 Up;//??? направление вектора, задающего поворот сцены 
- vec3 Side;//боковая сторона
- vec2 Scale;// отношение сторон выходного изображения
+ vec3 Up;//"y" камеры
+ vec3 Side;//"х" камеры
+ vec2 Scale;//отношение сторон выходного изображения
 };
 struct SRay//первичный луч выходящий из камеры
 {
  vec3 Origin;
  vec3 Direction;
 };
-struct SIntersection
+struct SIntersection //структура для хранения пересечения.
 {
 float Time;
 vec3 Point;
@@ -79,7 +79,7 @@ SRay GenerateRay ( SCamera uCamera )
 {
 	vec2 coords = glPosition.xy * uCamera.Scale;
 	vec3 direction = uCamera.View + uCamera.Side * coords.x + uCamera.Up * coords.y;
-	return SRay ( uCamera.Position, normalize(direction) );//луч из . камеры в . glPosition
+	return SRay ( uCamera.Position, normalize(direction) );//единичный луч направленный из . камеры в . glPosition
 }
 void initializeDefaultScene()
 {
@@ -150,39 +150,40 @@ void initializeDefaultScene()
 	spheres[1].MaterialIdx = 1;
 }
 
-bool IntersectSphere ( SSphere sphere, SRay ray, float start, float final, out float time )
+bool IntersectSphere ( SSphere sphere, SRay ray, float start, float final, out float time )//пересечение со сферой, time точка пересечения
 {
 	ray.Origin -= sphere.Center;
-	float A = dot ( ray.Direction, ray.Direction );
+	float A = dot ( ray.Direction, ray.Direction );//dot -скалярное произведение
 	float B = dot ( ray.Direction, ray.Origin );
 	float C = dot ( ray.Origin, ray.Origin ) - sphere.Radius * sphere.Radius;
-	float D = B * B - A * C;
+	float D = B * B - A * C;//дискриминант
 
-	if ( D > 0.0 )
+	if ( D > 0.0 )//2 точки пересечения
 	{
 		D = sqrt ( D );
 		float t1 = ( -B - D ) / A;
 		float t2 = ( -B + D ) / A;
-		if(t1 < 0 && t2 < 0)
+		if(t1 < 0 && t2 < 0)//сфера позади нас
 			return false;
-		if (min(t1, t2) < 0)
+		if (min(t1, t2) < 0)//мы внутри сферы
 		{
 			time = max(t1,t2);
 			return true;
 		}
-
+		//мы снаружи
 		time = min(t1, t2);
 		return true;
 	}
 	return false;
 }
 
-bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time )
+//Барицентрический тест (fast minimal storage ray triangle intersection)
+bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time )//пересечение с треуг
 {
 	time = -1;
 	vec3 A = v2 - v1;
 	vec3 B = v3 - v1;
-	vec3 N = cross(A, B);
+	vec3 N = cross(A, B);//cross векторное произведение
 	float NdotRayDirection = dot(N, ray.Direction);
 	if (abs(NdotRayDirection) < 0.001)
 		return false;
@@ -211,7 +212,8 @@ bool IntersectTriangle (SRay ray, vec3 v1, vec3 v2, vec3 v3, out float time )
 	return true;
 }
 
-bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect ) /*ТУТ НАДО ДОДЕЛАТЬ МАТЕРИАЛЫ!*/
+//пересекает луч со всеми примитивами сцены и возвращает ближайшее пересечение
+bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersect )
 {
 	int numTriangles = 10;
 	bool result = false;
@@ -233,7 +235,6 @@ bool Raytrace ( SRay ray, float start, float final, inout SIntersection intersec
 			intersect.MaterialType =  1;
 			result = true;
 		}
-
 	}
 	for (int i = 0; i < numTriangles; i++)
 	{
