@@ -7,10 +7,10 @@ const int REFLECTION = 1;
 const int DIFFUSE_REFLECTION = 0;
 const int MIRROR_REFLECTION = 1;
 
-out vec4 FragColor;
-in vec3 glPosition;
+out vec4 FragColor;//цвет пикселя на экране
+in vec3 glPosition;//соответсвует выходной вершине вершинного шейдера
 
-
+/*   STRUCTURES   */
 struct SSphere
 {
  vec3 Center;
@@ -26,14 +26,13 @@ struct STriangle
 };
 struct SCamera
 {
- vec3 Position;
- vec3 View;
- vec3 Up;
- vec3 Side;
- // отношение сторон выходного изображения
- vec2 Scale;
+ vec3 Position;//точка расположения камеры
+ vec3 View;//вектор "взгляда" или координаты точки, распологающейся в центре экрана
+ vec3 Up;//??? направление вектора, задающего поворот сцены 
+ vec3 Side;//боковая сторона
+ vec2 Scale;// отношение сторон выходного изображения
 };
-struct SRay
+struct SRay//первичный луч выходящий из камеры
 {
  vec3 Origin;
  vec3 Direction;
@@ -69,6 +68,7 @@ float contribution;
 int depth;
 };
 
+/*   GLOBAL VAR   */
 SLight light;
 STriangle triangles[12];
 SSphere spheres[2];
@@ -79,7 +79,7 @@ SRay GenerateRay ( SCamera uCamera )
 {
 	vec2 coords = glPosition.xy * uCamera.Scale;
 	vec3 direction = uCamera.View + uCamera.Side * coords.x + uCamera.Up * coords.y;
-	return SRay ( uCamera.Position, normalize(direction) );
+	return SRay ( uCamera.Position, normalize(direction) );//луч из . камеры в . glPosition
 }
 void initializeDefaultScene()
 {

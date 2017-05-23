@@ -50,9 +50,9 @@ namespace RayTracing
         {
             GL.Clear(ClearBufferMask.ColorBufferBit | ClearBufferMask.DepthBufferBit);
             GL.Enable(EnableCap.DepthTest);
-            GL.EnableVertexAttribArray(attribute_vpos);
-            GL.DrawArrays(PrimitiveType.Quads, 0, 4);
-            GL.DisableVertexAttribArray(attribute_vpos);
+            GL.EnableVertexAttribArray(attribute_vpos);//on
+            GL.DrawArrays(PrimitiveType.Quads, 0, 4);//отрисовываем буф объект
+            GL.DisableVertexAttribArray(attribute_vpos);//off
 
         }
         public View()
@@ -89,12 +89,13 @@ namespace RayTracing
         }
         private void InitSheders()
         {
-            BasicProgramID = GL.CreateProgram();
+            BasicProgramID = GL.CreateProgram();//создали объект шейдерной программы
             loadShader("..\\..\\raytracing.vert", ShaderType.VertexShader, 
                 BasicProgramID, out BasicVertexSheder);
             loadShader("..\\..\\raytracing.frag", ShaderType.FragmentShader,
                 BasicProgramID, out BasicFragmentShader);
             GL.LinkProgram(BasicProgramID);
+            //линковка успешна?
             int status = 0;
             GL.GetProgram(BasicProgramID, GetProgramParameterName.LinkStatus, out status);
             System.Windows.Forms.MessageBox.Show(GL.GetProgramInfoLog(BasicProgramID));
