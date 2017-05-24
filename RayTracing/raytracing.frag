@@ -50,14 +50,13 @@ int MaterialType;
 };
 struct SMaterial
 {
-vec3 Color;
-vec4 LightCoeffs;
-// 0 - non-reflection, 1 - mirror
-float ReflectionCoef;
-float RefractionCoef;
+vec3 Color;//diffuse color
+vec4 LightCoeffs;//коэффициент фоновой освещенности
+float ReflectionCoef;//отражение, 0 - non-reflection, 1 - mirror
+float RefractionCoef;//преломление
 int MaterialType;
 };
-struct SLight
+struct SLight//точечный источник света
 {
 vec3 Position;
 };
@@ -277,7 +276,7 @@ materials[0].ReflectionCoef = 0.5;
 materials[0].RefractionCoef = 1.0;
 materials[0].MaterialType = DIFFUSE_REFLECTION;
 
-materials[1].Color = vec3(0.0, 0.0, 1.0);
+materials[1].Color = vec3(0.0, 0.0, 1.0);//материал для шариков
 materials[1].LightCoeffs = vec4(lightCoefs);
 materials[1].ReflectionCoef = 0.5;
 materials[1].RefractionCoef = 1.0;
@@ -307,13 +306,15 @@ materials[5].ReflectionCoef = 0.5;
 materials[5].RefractionCoef = 1.0;
 materials[5].MaterialType = DIFFUSE_REFLECTION;
 }
+//модель освещения Фонга, расчет освещения из 3 компонент
+//фоновой (ambient), рассеянной (diffuse) и глянцевых бликов (specular)
 vec3 Phong ( SIntersection intersect, SLight currLight, float shadowing, SCamera uCamera)
 {
 	vec3 lightTmp = normalize ( currLight.Position - intersect.Point );
-	float diffuse = max(dot(lightTmp, intersect.Normal), 0.0);
+	float diffuse = max(dot(lightTmp, intersect.Normal), 0.0);//если lTmp параллелен поверхности, то res = 0
 	vec3 view = normalize(uCamera.Position - intersect.Point);
-	vec3 reflected = reflect( -view, intersect.Normal );
-	float specular = pow(max(dot(reflected, lightTmp), 0.0), intersect.LightCoeffs.w);
+	vec3 reflected = reflect( -view, intersect.Normal );//направление отражения для вектора падения
+	float specular = pow(max(dot(reflected, lightTmp), 0.0), intersect.LightCoeffs.w);//зеркальная составляющая
 	return intersect.LightCoeffs.x * intersect.Color +
  intersect.LightCoeffs.y * diffuse * intersect.Color * shadowing +
  intersect.LightCoeffs.z * specular * Unit;
